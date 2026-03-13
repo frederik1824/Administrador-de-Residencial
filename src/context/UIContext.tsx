@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Search, Command, X, Bell, User, Building2, CreditCard, Home, Wrench, ArrowRight, AlertTriangle, RefreshCw, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { update, COLLECTIONS } from '../services/dbServices';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 interface Toast {
