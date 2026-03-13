@@ -2,7 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, Command, X, Bell, User, Building2, CreditCard, Home, Wrench, ArrowRight, AlertTriangle, RefreshCw, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getAll, update, COLLECTIONS } from '../services/dbServices';
+import { update, COLLECTIONS } from '../services/dbServices';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 interface Toast {
     id: string;
@@ -54,30 +56,48 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         if (!isNotificationsOpen) fetchNotifications();
     };
 
-    const fetchNotifications = async () => {
+    // Real-time notifications listener
+    useEffect(() => {
         setLoadingNotifs(true);
-        try {
-            const [msgs, tickets, payments] = await Promise.all([
-                getAll(COLLECTIONS.MESSAGES),
-                getAll(COLLECTIONS.TICKETS),
-                getAll(COLLECTIONS.PAYMENTS)
-            ]);
 
+        const qMessages = query(
+            collection(db, COLLECTIONS.MESSAGES),
+            where('senderRole', '==', 'resident'),
+            where('read', '==', false)
+        );
+
+        const qTickets = query(
+            collection(db, COLLECTIONS.TICKETS),
+            where('seenByAdmin', '==', false)
+        );
+
+        const qPayments = query(
+            collection(db, COLLECTIONS.PAYMENTS),
+            where('seenByAdmin', '==', false)
+        );
+
+        const unsubscribes: (() => void)[] = [];
+        let allMessages: any[] = [];
+        let allTickets: any[] = [];
+        let allPayments: any[] = [];
+
+        const updateAll = () => {
             const items: NotificationItem[] = [];
 
-            // Process Messages (Unread from residents)
-            const unreadMsgs = (msgs as any[]).filter(m => m.senderRole === 'resident' && !m.read);
+            // Process Messages
             const msgGroups = new Map<string, any>();
-            unreadMsgs.forEach(m => {
-                if (!msgGroups.has(m.residentEmail)) msgGroups.set(m.residentEmail, { ...m, count: 0, ids: [] });
-                const group = msgGroups.get(m.residentEmail);
+            allMessages.forEach(m => {
+                const groupKey = m.residentEmail || m.residentId || 'unknown';
+                if (!msgGroups.has(groupKey)) msgGroups.set(groupKey, { ...m, count: 0, ids: [] });
+                const group = msgGroups.get(groupKey);
                 group.count++;
                 group.ids.push(m.id);
             });
+
             msgGroups.forEach((m) => {
                 items.push({
                     id: `msg-${m.id}`,
-                    title: `Mensaje de ${m.residentName}`,
+                    title: `Mensaje de ${m.residentName || 'Residente'}`,
                     desc: m.count > 1 ? `${m.count} mensajes nuevos` : m.text,
                     time: m.createdAt?.seconds ? new Date(m.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Reciente',
                     type: 'message',
@@ -87,8 +107,8 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 });
             });
 
-            // Process Tickets (Open ones AND not seen)
-            (tickets as any[]).filter(t => (t.status === 'Abierto' || t.status === 'En Progreso') && !t.seenByAdmin).forEach(t => {
+            // Process Tickets
+            allTickets.filter(t => t.status === 'Abierto' || t.status === 'En Progreso').forEach(t => {
                 items.push({
                     id: `tick-${t.id}`,
                     title: `Ticket: ${t.issue}`,
@@ -100,8 +120,8 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 });
             });
 
-            // Process Payments (In verification AND not seen)
-            (payments as any[]).filter(p => (p.status === 'En Verificación' || p.status === 'Pendiente') && !p.seenByAdmin).slice(0, 5).forEach(p => {
+            // Process Payments
+            allPayments.filter(p => p.status === 'En Verificación' || p.status === 'Pendiente').forEach(p => {
                 items.push({
                     id: `pay-${p.id}`,
                     title: `Pago por validar: RD$ ${p.amount}`,
@@ -113,21 +133,32 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
                 });
             });
 
-            setNotifications(items.slice(0, 10)); // Top 10
+            setNotifications(items.slice(0, 10));
             setUnreadCount(items.length);
-        } catch (error) {
-            console.error('Failed to fetch notifications:', error);
-        } finally {
             setLoadingNotifs(false);
-        }
-    };
+        };
 
-    // Periodic polling for notifications
-    useEffect(() => {
-        fetchNotifications(); // Initial fetch
-        const interval = setInterval(fetchNotifications, 30000); // Every 30 seconds
-        return () => clearInterval(interval);
+        unsubscribes.push(onSnapshot(qMessages, (snapshot) => {
+            allMessages = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateAll();
+        }));
+
+        unsubscribes.push(onSnapshot(qTickets, (snapshot) => {
+            allTickets = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateAll();
+        }));
+
+        unsubscribes.push(onSnapshot(qPayments, (snapshot) => {
+            allPayments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateAll();
+        }));
+
+        return () => unsubscribes.forEach(unsub => unsub());
     }, []);
+
+    const fetchNotifications = async () => {
+        // Handled by snapshots now
+    };
 
     const handleNotificationClick = async (notif: NotificationItem) => {
         setIsNotificationsOpen(false);
