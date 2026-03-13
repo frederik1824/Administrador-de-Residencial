@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updateUserPassword = async (uid: string, newPassword: string) => {
         // Enlace al nuevo backend proxy (Servidor-de-archivo-next)
-        const response = await fetch('http://72.62.167.179:3000/admin/update-password', {
+        const response = await fetch('https://devsdesign.cloud/api/admin/update-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid, newPassword })
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const inviteUser = async (email: string, name: string) => {
-        const response = await fetch('http://72.62.167.179:3000/admin/invite-user', {
+        const response = await fetch('https://devsdesign.cloud/api/admin/invite-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name })

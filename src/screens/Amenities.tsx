@@ -111,7 +111,7 @@ export function Amenities() {
         const formData = new FormData();
         formData.append('photo', selectedFile);
 
-        const response = await fetch('http://72.62.167.179:3001/upload', {
+        const response = await fetch('https://devsdesign.cloud/upload', {
             method: 'POST',
             body: formData,
         });
@@ -121,7 +121,16 @@ export function Amenities() {
         }
 
         const data = await response.json();
-        return data.url;
+
+        // Normalize URL: replace raw VPS IP:port with HTTPS domain proxy
+        // This avoids Mixed Content blocking in production (HTTPS page + HTTP image)
+        const rawUrl: string = data.url || data.imageUrl || data.path || '';
+        const publicUrl = rawUrl
+            .replace('http://72.62.167.179:3001', 'https://devsdesign.cloud')
+            .replace('http://127.0.0.1:3001', 'https://devsdesign.cloud')
+            .replace('http://localhost:3001', 'https://devsdesign.cloud');
+
+        return publicUrl || rawUrl;
     };
 
     const handleSaveAmenity = async (e: React.FormEvent) => {
