@@ -111,7 +111,7 @@ export function Amenities() {
         const formData = new FormData();
         formData.append('photo', selectedFile);
 
-        const response = await fetch('https://devsdesign.cloud/upload', {
+        const response = await fetch('https://api.devsdesign.cloud/upload', {
             method: 'POST',
             body: formData,
         });
@@ -126,9 +126,9 @@ export function Amenities() {
         // This avoids Mixed Content blocking in production (HTTPS page + HTTP image)
         const rawUrl: string = data.url || data.imageUrl || data.path || '';
         const publicUrl = rawUrl
-            .replace('http://72.62.167.179:3001', 'https://devsdesign.cloud')
-            .replace('http://127.0.0.1:3001', 'https://devsdesign.cloud')
-            .replace('http://localhost:3001', 'https://devsdesign.cloud');
+            .replace('http://72.62.167.179:3001', 'https://api.devsdesign.cloud')
+            .replace('http://127.0.0.1:3001', 'https://api.devsdesign.cloud')
+            .replace('http://localhost:3001', 'https://api.devsdesign.cloud');
 
         return publicUrl || rawUrl;
     };
@@ -203,6 +203,14 @@ export function Amenities() {
                 r.status === 'Rechazada' ? 'Rechazadas' : r.status;
         return mappedStatus === activeTab;
     });
+
+    // Help fix Mixed Content issues: force HTTP IP URLs to HTTPS Domain URLs for rendering
+    const secureUrl = (url: string) => {
+        if (!url) return '';
+        return url
+            .replace('http://72.62.167.179:3001', 'https://api.devsdesign.cloud')
+            .replace('http://localhost:3001', 'https://api.devsdesign.cloud');
+    };
 
     return (
         <div className="flex flex-col h-full relative">
@@ -356,7 +364,7 @@ export function Amenities() {
                                 <div key={amen.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                     <div className="h-48 bg-slate-100 dark:bg-slate-800 relative">
                                         {amen.image ? (
-                                            <img src={amen.image} alt={amen.name} className="w-full h-full object-cover" />
+                                            <img src={secureUrl(amen.image)} alt={amen.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-400">
                                                 <ImageIcon size={48} opacity={0.5} />
@@ -524,7 +532,7 @@ export function Amenities() {
                                     {selectedFile ? (
                                         <img src={URL.createObjectURL(selectedFile)} className="w-full h-full object-cover" alt="Preview" />
                                     ) : amenityFormData.image ? (
-                                        <img src={amenityFormData.image} className="w-full h-full object-cover" alt="Saved Preview" />
+                                        <img src={secureUrl(amenityFormData.image)} className="w-full h-full object-cover" alt="Saved Preview" />
                                     ) : (
                                         <>
                                             <ImageIcon className="text-slate-400 mb-2" size={28} />
