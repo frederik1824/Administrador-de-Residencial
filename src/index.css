@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #137fec;
+  --color-primary-dark: #0a56a6;
+  --color-soft-blue: #f0f7ff;
+  --color-background-light: #f8fafc;
+  --color-background-dark: #0f172a;
+  --sidebar-width: 280px;
+
+  --font-display: "Inter", sans-serif;
+  
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+  --radius-4xl: 2.5rem;
+}
+
+@utility glass {
+  background-color: rgb(255 255 255 / 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@utility glass-dark {
+  background-color: rgb(15 23 42 / 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@utility animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@layer base {
+  body {
+    @apply bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-sans;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+
+  * {
+    @apply transition-colors duration-200 border-slate-200 dark:border-slate-800;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full hover:bg-slate-400 dark:hover:bg-slate-600;
+  }
+}
+
+/* Accessibility & Readability Utilities */
+@utility label-text {
+  @apply text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider;
+}
+
+@utility input-premium {
+  @apply w-full px-5 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary text-slate-900 dark:text-white outline-none transition-all shadow-sm;
+}
+
+@utility btn-primary {
+  @apply bg-primary hover:bg-primary-dark text-white px-6 py-3.5 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all active:scale-95;
+}
+
+@utility btn-secondary {
+  @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-6 py-3.5 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm;
+}
+
+/* Skeleton Loading Animation */
+@utility skeleton {
+  @apply bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl;
+}
+
+/* Toast Backdrop Blur variant */
+@utility toast-premium {
+  @apply glass dark:glass-dark border border-slate-200/50 dark:border-slate-800/50 shadow-2xl rounded-2xl p-4 flex items-center gap-4;
+}
+
+/* Page transitions foundation */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
